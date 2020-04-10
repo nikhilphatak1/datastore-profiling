@@ -1,6 +1,7 @@
-import dotenv
+#import dotenv
 import pynamodb.attributes as attrs
 import pynamodb.models as models
+from dotenv import load_dotenv
 
 
 class Thingy(models.Model):
@@ -15,9 +16,9 @@ class Thingy(models.Model):
         return "<Thingy {} name:{}>".format(self.id, self.name)
 
 
-def main(cfg):
-    dotenv.load_dotenv()
-
+def main():
+    #dotenv.load_dotenv()
+    load_dotenv()
     if Thingy.exists():
         Thingy.delete_table()
     Thingy.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
