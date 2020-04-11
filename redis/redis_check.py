@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[118]:
+# In[1]:
 
 
 #from time import time
@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 # # Establish redis connection
 
-# In[151]:
+# In[2]:
 
 
 import redis
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     print("Check ",r.get("check"))
 
 
-# In[152]:
+# In[3]:
 
 
 r = redis.Redis(host="192.168.99.100",port=6379)
@@ -31,7 +31,7 @@ r = redis.Redis(host="192.168.99.100",port=6379)
 
 # # Test job size vs job time
 
-# In[311]:
+# In[4]:
 
 
 N = 1000
@@ -63,10 +63,12 @@ for size in array_sizes:
     
     for i in range(N):
 
-        t_start = r.time()
         
         key = "{0:015b}".format(i)
         x = np.random.uniform(0,1,size=(size,size))
+        
+        t_start = r.time()
+
         r.set(key,x.tobytes())
 
         t_end = r.time()
@@ -82,9 +84,12 @@ for size in array_sizes:
     # get values
     for i in range(N):
 
-        t_start = r.time()
         
         key = "{0:015b}".format(i)
+        
+        t_start = r.time()
+
+            
         r.get(key)
         
         t_end =  r.time()
@@ -110,7 +115,7 @@ for size in array_sizes:
     
 
 
-# In[314]:
+# In[11]:
 
 
 plt.plot(np.array(list(memory_set.keys())),np.array(list(memory_set.values())))
@@ -120,17 +125,17 @@ plt.ylabel("Average Time")
 plt.legend(["Set","Get"])
 
 
-# In[320]:
+# In[7]:
 
 
 plt.plot(np.array(list(memory_get.keys())),np.array(list(memory_get.values()))-np.array(list(memory_set.values())))
 plt.xlabel("Memory (bytes)")
 plt.ylabel("Average Time")
-plt.title("Set - Get as memory increased")
+plt.title("Get - Set as memory increased")
 plt.show()
 
 
-# In[316]:
+# In[32]:
 
 
 plt.figure(figsize=(10,5))
@@ -144,17 +149,19 @@ for size in array_sizes:
     num_bins = int(np.sqrt(len(t)))#int(np.floor(5/3 * (len(t)**(1/3))))
     counts, bin_edges = np.histogram (t, bins=num_bins, normed=True)
     cdf = np.cumsum (counts)
-    plt.plot (np.hstack((np.zeros((1,)),bin_edges[1:])), np.hstack((np.zeros(1,),cdf/cdf[-1])))
-    plt.xlabel("t"); plt.ylabel("f(t)");
+    #plt.plot (np.hstack((np.zeros((1,)),bin_edges[1:])), np.hstack((np.zeros(1,),cdf/cdf[-1])))
+    plt.plot(bin_edges[1:], cdf/cdf[-1])
+    plt.xlabel("t (s)"); plt.ylabel("f(t)");
     
     
 
-plt.xlim([0,0.005])
+plt.xlim([0.0002,0.015])
 plt.legend(array_sizes**2 * 8)
-plt.show()
+plt.title("Set time CDF")
+plt.show() 
 
 
-# In[318]:
+# In[37]:
 
 
 plt.figure(figsize=(10,5))
@@ -168,17 +175,19 @@ for size in array_sizes:
     num_bins = int(np.sqrt(len(t)))#int(np.floor(5/3 * (len(t)**(1/3))))
     counts, bin_edges = np.histogram (t, bins=num_bins, normed=True)
     cdf = np.cumsum (counts)
-    plt.plot (np.hstack((np.zeros((1,)),bin_edges[1:])), np.hstack((np.zeros(1,),cdf/cdf[-1])))
-    plt.xlabel("t"); plt.ylabel("f(t)");
+    #plt.plot (np.hstack((np.zeros((1,)),bin_edges[1:])), np.hstack((np.zeros(1,),cdf/cdf[-1])))
+    plt.plot(bin_edges[1:], cdf/cdf[-1])
+    plt.xlabel("t (s)"); plt.ylabel("f(t)");
     
     
 
-plt.xlim([0,0.0015])
+plt.xlim([0,0.011])
 plt.legend(array_sizes**2 * 8)
+plt.title("Get time CDF")
 plt.show()
 
 
-# In[322]:
+# In[38]:
 
 
 # clear keys
@@ -188,7 +197,7 @@ for i in range(N):
 
 # #  \#job vs total time
 
-# In[323]:
+# In[39]:
 
 
 N = 100
@@ -259,28 +268,29 @@ for size in job_size:
     
 
 
-# In[327]:
+# In[42]:
 
 
 plt.plot(np.array(list(memory_set.keys())),np.array(list(memory_set.values())))
 plt.plot(np.array(list(memory_get.keys())),np.array(list(memory_get.values())))
-plt.xlabel("Memory (bytes)")
+plt.xlabel("Number of Jobs")
 plt.ylabel("Average Time")
+plt.title("Number of jobs all at once")
 plt.legend(["Set","Get"])
 plt.show()
 
 
-# In[328]:
+# In[44]:
 
 
 plt.plot(np.array(list(memory_get.keys())),np.array(list(memory_get.values()))-np.array(list(memory_set.values())))
-plt.xlabel("Memory (bytes)")
+plt.xlabel("Number Of Jobs")
 plt.ylabel("Average Time")
-plt.title("Set - Get as memory increased")
+plt.title("Get - Set as Number Of Jobs increased")
 plt.show()
 
 
-# In[335]:
+# In[66]:
 
 
 plt.figure(figsize=(10,5))
@@ -294,17 +304,19 @@ for size in job_size:
     num_bins = int(np.sqrt(len(t))) #int(np.floor(5/3 * (len(t)**(1/3))))
     counts, bin_edges = np.histogram (t, bins=num_bins, normed=True)
     cdf = np.cumsum (counts)
-    plt.plot (np.hstack((np.zeros((1,)),bin_edges[1:])), np.hstack((np.zeros(1,),cdf/cdf[-1])))
+    #plt.plot (np.hstack((np.zeros((1,)),bin_edges[1:])), np.hstack((np.zeros(1,),cdf/cdf[-1])))
+    plt.plot (bin_edges[1:],cdf/cdf[-1])
     plt.xlabel("t"); plt.ylabel("f(t)");
+    plt.title("Set number of jobs all at once CDF")
     
     
 
-plt.xlim([0,5])
+plt.xlim([0,2])
 plt.legend(job_size)
 plt.show()
 
 
-# In[336]:
+# In[69]:
 
 
 plt.figure(figsize=(10,5))
@@ -318,17 +330,19 @@ for size in job_size:
     num_bins = int(np.sqrt(len(t)))#int(np.floor(5/3 * (len(t)**(1/3))))
     counts, bin_edges = np.histogram (t, bins=num_bins, normed=True)
     cdf = np.cumsum (counts)
-    plt.plot (np.hstack((np.zeros((1,)),bin_edges[1:])), np.hstack((np.zeros(1,),cdf/cdf[-1])))
+    #plt.plot (np.hstack((np.zeros((1,)),bin_edges[1:])), np.hstack((np.zeros(1,),cdf/cdf[-1])))
+    plt.plot (bin_edges[1:], cdf/cdf[-1])
+    plt.title("Get Number of jobs all at once CDF")
     plt.xlabel("t"); plt.ylabel("f(t)");
     
     
 
-plt.xlim()
+plt.xlim([0,0.003])
 plt.legend(job_size)
 plt.show()
 
 
-# In[337]:
+# In[70]:
 
 
 # clear keys
