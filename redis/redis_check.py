@@ -7,11 +7,12 @@
 #from time import time
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 
 # # Establish redis connection
 
-# In[27]:
+# In[2]:
 
 
 import redis
@@ -23,7 +24,7 @@ if __name__ == "__main__":
     print("Check ",r.get("check"))
 
 
-# In[28]:
+# In[3]:
 
 
 r = redis.Redis(host="192.168.99.100",port=6379)
@@ -31,15 +32,16 @@ r = redis.Redis(host="192.168.99.100",port=6379)
 
 # # Test job size vs job time
 
-# In[38]:
+# In[4]:
 
 
 # clear keys
+N = 10000
 for i in range(N):
     r.delete("{0:015b}".format(i))
 
 
-# In[39]:
+# In[5]:
 
 
 N = 10000
@@ -72,22 +74,22 @@ for size in array_sizes:
         # set
         x = np.random.uniform(0,1,size=(size,size))
         
-        t_start = r.time()
+        t_start = time.time_ns()#r.time()
         r.set(key,x.tobytes())
-        t_end = r.time()
+        t_end = time.time_ns()#r.time()
         
-        job_time = (t_end[0] + t_end[1]*1e-6)-(t_start[0] + t_start[1]*1e-6)
+        job_time = (t_end-t_start)* 10**(-9)#(t_end[0] + t_end[1]*1e-6)-(t_start[0] + t_start[1]*1e-6)
         t_set.append(job_time)
-        t_set_complete.append(t_end[0] + t_end[1]*1e-6)
+        #t_set_complete.append(t_end[0] + t_end[1]*1e-6)
 
         # get        
-        t_start = r.time()
+        t_start = time.time_ns()#r.time()
         r.get(key)
-        t_end =  r.time()
+        t_end =  time.time_ns()#r.time()
         
-        job_time = (t_end[0] + t_end[1]*1e-6)-(t_start[0] + t_start[1]*1e-6)
+        job_time = (t_end-t_start)* 10**(-9)#(t_end[0] + t_end[1]*1e-6)-(t_start[0] + t_start[1]*1e-6)
         t_get.append(job_time)
-        t_get_complete.append(t_end[0] + t_end[1]*1e-6)
+        #t_get_complete.append(t_end[0] + t_end[1]*1e-6)
         
         # delete key
         r.delete(key)
@@ -103,7 +105,7 @@ for size in array_sizes:
     time_complete_get[str(size**2 * 8)] = time_complete_get
 
 
-# In[50]:
+# In[6]:
 
 
 plt.plot(np.array(list(memory_set.keys())),np.array(list(memory_set.values())))
@@ -114,7 +116,7 @@ plt.xticks(rotation=-90)
 plt.legend(["Set","Get"])
 
 
-# In[52]:
+# In[7]:
 
 
 plt.plot(np.array(list(memory_get.keys())),np.array(list(memory_get.values()))-np.array(list(memory_set.values())))
@@ -125,7 +127,7 @@ plt.title("Get - Set as memory increased",fontsize=20)
 plt.show()
 
 
-# In[61]:
+# In[8]:
 
 
 plt.figure(figsize=(10,5))
@@ -145,13 +147,13 @@ for size in array_sizes:
     
     
 
-plt.xlim([0.0002,0.01])
+plt.xlim([0.000002,0.005])
 plt.legend(array_sizes**2 * 8)
 plt.title("Set time CDF",fontsize=20)
 plt.show() 
 
 
-# In[67]:
+# In[9]:
 
 
 plt.figure(figsize=(10,5))
@@ -171,13 +173,13 @@ for size in array_sizes:
     
     
 
-plt.xlim([0,0.01])
+plt.xlim([0,0.015])
 plt.legend(array_sizes**2 * 8)
 plt.title("Get time CDF",fontsize=20)
 plt.show()
 
 
-# In[75]:
+# In[10]:
 
 
 # clear keys
@@ -222,26 +224,26 @@ for size in job_size:
             x = np.random.uniform(0,1,size=(8,8))
             pipeline.set(key,x.tobytes())
 
-        t_start = r.time()
+        t_start = time.time_ns()#r.time()
         pipeline.execute()
-        t_end = r.time()
+        t_end = time.time_ns()#r.time()
         
-        job_time = (t_end[0] + t_end[1]*1e-6)-(t_start[0] + t_start[1]*1e-6)
+        job_time = (t_end-t_start)* 10**(-9) #(t_end[0] + t_end[1]*1e-6)-(t_start[0] + t_start[1]*1e-6)
         t_set.append(job_time)
-        t_set_complete.append(t_end[0] + t_end[1]*1e-6)
+        #t_set_complete.append(t_end[0] + t_end[1]*1e-6)
         
         # get values
         for i in range(size):
             key = "{0:015b}".format(i)
             pipeline.get(key)
 
-        t_start = r.time()
+        t_start = time.time_ns() #r.time()
         pipeline.execute()
-        t_end = r.time()
+        t_end = time.time_ns() #r.time()
         
-        job_time = (t_end[0] + t_end[1]*1e-6)-(t_start[0] + t_start[1]*1e-6)
+        job_time = (t_end-t_start)* 10**(-9)#(t_end[0] + t_end[1]*1e-6)-(t_start[0] + t_start[1]*1e-6)
         t_get.append(job_time)
-        t_get_complete.append(t_end[0] + t_end[1]*1e-6)
+        #t_get_complete.append(t_end[0] + t_end[1]*1e-6)
 
         # clear keys
         for i in range(size):
@@ -254,7 +256,7 @@ for size in job_size:
     time_table_get[str(size)] = t_get
 
 
-# In[42]:
+# In[ ]:
 
 
 plt.plot(np.array(list(memory_set.keys())),np.array(list(memory_set.values())))
@@ -266,7 +268,7 @@ plt.legend(["Set","Get"])
 plt.show()
 
 
-# In[44]:
+# In[ ]:
 
 
 plt.plot(np.array(list(memory_get.keys())),np.array(list(memory_get.values()))-np.array(list(memory_set.values())))
@@ -276,7 +278,7 @@ plt.title("Get - Set as Number Of Jobs increased",fontsize=20)
 plt.show()
 
 
-# In[66]:
+# In[ ]:
 
 
 plt.figure(figsize=(10,5))
@@ -302,7 +304,7 @@ plt.legend(job_size)
 plt.show()
 
 
-# In[69]:
+# In[ ]:
 
 
 plt.figure(figsize=(10,5))
@@ -328,7 +330,7 @@ plt.legend(job_size)
 plt.show()
 
 
-# In[70]:
+# In[ ]:
 
 
 # clear keys
