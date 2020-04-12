@@ -103,29 +103,29 @@ for size in array_sizes:
     time_complete_get[str(size**2 * 8)] = time_complete_get
 
 
-# In[46]:
+# In[50]:
 
 
 plt.plot(np.array(list(memory_set.keys())),np.array(list(memory_set.values())))
 plt.plot(np.array(list(memory_get.keys())),np.array(list(memory_get.values())))
 plt.xlabel("Memory (bytes)",fontsize=15)
-plt.ylabel("Average Time",fontsize=15)
+plt.ylabel("Average Time (s)",fontsize=15)
 plt.xticks(rotation=-90)
 plt.legend(["Set","Get"])
 
 
-# In[45]:
+# In[52]:
 
 
 plt.plot(np.array(list(memory_get.keys())),np.array(list(memory_get.values()))-np.array(list(memory_set.values())))
 plt.xlabel("Memory (bytes)",fontsize=15)
 plt.xticks(rotation=-90)
-plt.ylabel("Average Time",fontsize=15)
+plt.ylabel("Average Time (s)",fontsize=15)
 plt.title("Get - Set as memory increased",fontsize=20)
 plt.show()
 
 
-# In[47]:
+# In[61]:
 
 
 plt.figure(figsize=(10,5))
@@ -145,13 +145,13 @@ for size in array_sizes:
     
     
 
-plt.xlim([0.0002,0.015])
+plt.xlim([0.0002,0.01])
 plt.legend(array_sizes**2 * 8)
 plt.title("Set time CDF",fontsize=20)
 plt.show() 
 
 
-# In[48]:
+# In[67]:
 
 
 plt.figure(figsize=(10,5))
@@ -167,17 +167,17 @@ for size in array_sizes:
     cdf = np.cumsum (counts)
     #plt.plot (np.hstack((np.zeros((1,)),bin_edges[1:])), np.hstack((np.zeros(1,),cdf/cdf[-1])))
     plt.plot(bin_edges[1:], cdf/cdf[-1])
-    plt.xlabel("t (s)",fontsize=15); plt.ylabel("f(t)",fontsize=15);
+    plt.xlabel("t (s)",fontsize=15); plt.ylabel("F(t)",fontsize=15);
     
     
 
-plt.xlim([0,0.011])
+plt.xlim([0,0.01])
 plt.legend(array_sizes**2 * 8)
 plt.title("Get time CDF",fontsize=20)
 plt.show()
 
 
-# In[49]:
+# In[75]:
 
 
 # clear keys
@@ -187,10 +187,10 @@ for i in range(N):
 
 # #  \#job vs total time
 
-# In[ ]:
+# In[72]:
 
 
-N = 100
+N = 10000
 
 memory_set = {}
 memory_get = {}
@@ -258,13 +258,80 @@ for size in job_size:
     
 
 
+# In[ ]:
+
+
+N = 10000
+
+memory_set = {}
+memory_get = {}
+
+time_table_set = {}
+time_table_get = {}
+
+time_complete_set = {}
+time_complete_get = {}
+
+pipeline = r.pipeline(transaction=True)
+
+
+job_size = np.array([1,10,100,1000,10000,100000])
+
+for size in job_size:
+    
+    print("N jobs {}".format(size))
+    t_set = []
+    t_get = []
+    t_set_complete = []
+    t_get_complete =[]
+    
+    # store values
+    
+    for _ in range(N):
+        for i in range(size):
+            key = "{0:015b}".format(i)
+            x = np.random.uniform(0,1,size=(8,8))
+            pipeline.set(key,x.tobytes())
+
+        t_start = r.time()
+        pipeline.execute()
+        t_end = r.time()
+        
+        job_time = (t_end[0] + t_end[1]*1e-6)-(t_start[0] + t_start[1]*1e-6)
+        t_set.append(job_time)
+        t_set_complete.append(t_end[0] + t_end[1]*1e-6)
+        
+        # get values
+        for i in range(size):
+            key = "{0:015b}".format(i)
+            pipeline.get(key)
+
+        t_start = r.time()
+        pipeline.execute()
+        t_end = r.time()
+        
+        job_time = (t_end[0] + t_end[1]*1e-6)-(t_start[0] + t_start[1]*1e-6)
+        t_get.append(job_time)
+        t_get_complete.append(t_end[0] + t_end[1]*1e-6)
+
+        # clear keys
+        for i in range(size):
+            r.delete("{0:015b}".format(i))
+    
+    memory_set[str(size)] = np.mean(t_set)
+    time_table_set[str(size)] = t_set
+    
+    memory_get[str(size)] = np.mean(t_get)
+    time_table_get[str(size)] = t_get
+
+
 # In[42]:
 
 
 plt.plot(np.array(list(memory_set.keys())),np.array(list(memory_set.values())))
 plt.plot(np.array(list(memory_get.keys())),np.array(list(memory_get.values())))
 plt.xlabel("Number of Jobs",fontsize=15)
-plt.ylabel("Average Time",fontsize=15)
+plt.ylabel("Average Time (s)",fontsize=15)
 plt.title("Number of jobs all at once",fontsize=20)
 plt.legend(["Set","Get"])
 plt.show()
