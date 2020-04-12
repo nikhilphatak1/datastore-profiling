@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 # # Establish redis connection
 
-# In[2]:
+# In[27]:
 
 
 import redis
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     print("Check ",r.get("check"))
 
 
-# In[3]:
+# In[28]:
 
 
 r = redis.Redis(host="192.168.99.100",port=6379)
@@ -31,10 +31,18 @@ r = redis.Redis(host="192.168.99.100",port=6379)
 
 # # Test job size vs job time
 
-# In[4]:
+# In[38]:
 
 
-N = 1000
+# clear keys
+for i in range(N):
+    r.delete("{0:015b}".format(i))
+
+
+# In[39]:
+
+
+N = 10000
 
 memory_set = {}
 memory_get = {}
@@ -57,52 +65,33 @@ for size in array_sizes:
     t_get = []
     t_set_complete = []
     t_get_complete =[]
-    
-    # store values
-    
-    
+        
+    key = "{0:015b}".format(1)
     for i in range(N):
 
-        
-        key = "{0:015b}".format(i)
+        # set
         x = np.random.uniform(0,1,size=(size,size))
         
         t_start = r.time()
-
         r.set(key,x.tobytes())
-
         t_end = r.time()
         
         job_time = (t_end[0] + t_end[1]*1e-6)-(t_start[0] + t_start[1]*1e-6)
-        
-        
         t_set.append(job_time)
         t_set_complete.append(t_end[0] + t_end[1]*1e-6)
 
-        
-        
-    # get values
-    for i in range(N):
-
-        
-        key = "{0:015b}".format(i)
-        
+        # get        
         t_start = r.time()
-
-            
         r.get(key)
-        
         t_end =  r.time()
         
         job_time = (t_end[0] + t_end[1]*1e-6)-(t_start[0] + t_start[1]*1e-6)
-        
         t_get.append(job_time)
         t_get_complete.append(t_end[0] + t_end[1]*1e-6)
-
         
-    # clear keys
-    for i in range(N):
-        r.delete("{0:015b}".format(i))
+        # delete key
+        r.delete(key)
+
     
     memory_set[str(size**2 * 8)] = np.mean(t_set)
     time_table_set[str(size**2 * 8)] = t_set
@@ -112,30 +101,31 @@ for size in array_sizes:
     
     time_complete_set[str(size**2 * 8)] = time_complete_set
     time_complete_get[str(size**2 * 8)] = time_complete_get
-    
 
 
-# In[11]:
+# In[46]:
 
 
 plt.plot(np.array(list(memory_set.keys())),np.array(list(memory_set.values())))
 plt.plot(np.array(list(memory_get.keys())),np.array(list(memory_get.values())))
-plt.xlabel("Memory (bytes)")
-plt.ylabel("Average Time")
+plt.xlabel("Memory (bytes)",fontsize=15)
+plt.ylabel("Average Time",fontsize=15)
+plt.xticks(rotation=-90)
 plt.legend(["Set","Get"])
 
 
-# In[7]:
+# In[45]:
 
 
 plt.plot(np.array(list(memory_get.keys())),np.array(list(memory_get.values()))-np.array(list(memory_set.values())))
-plt.xlabel("Memory (bytes)")
-plt.ylabel("Average Time")
-plt.title("Get - Set as memory increased")
+plt.xlabel("Memory (bytes)",fontsize=15)
+plt.xticks(rotation=-90)
+plt.ylabel("Average Time",fontsize=15)
+plt.title("Get - Set as memory increased",fontsize=20)
 plt.show()
 
 
-# In[32]:
+# In[47]:
 
 
 plt.figure(figsize=(10,5))
@@ -151,17 +141,17 @@ for size in array_sizes:
     cdf = np.cumsum (counts)
     #plt.plot (np.hstack((np.zeros((1,)),bin_edges[1:])), np.hstack((np.zeros(1,),cdf/cdf[-1])))
     plt.plot(bin_edges[1:], cdf/cdf[-1])
-    plt.xlabel("t (s)"); plt.ylabel("f(t)");
+    plt.xlabel("t (s)",fontsize=15); plt.ylabel("F(t)",fontsize=15);
     
     
 
 plt.xlim([0.0002,0.015])
 plt.legend(array_sizes**2 * 8)
-plt.title("Set time CDF")
+plt.title("Set time CDF",fontsize=20)
 plt.show() 
 
 
-# In[37]:
+# In[48]:
 
 
 plt.figure(figsize=(10,5))
@@ -177,17 +167,17 @@ for size in array_sizes:
     cdf = np.cumsum (counts)
     #plt.plot (np.hstack((np.zeros((1,)),bin_edges[1:])), np.hstack((np.zeros(1,),cdf/cdf[-1])))
     plt.plot(bin_edges[1:], cdf/cdf[-1])
-    plt.xlabel("t (s)"); plt.ylabel("f(t)");
+    plt.xlabel("t (s)",fontsize=15); plt.ylabel("f(t)",fontsize=15);
     
     
 
 plt.xlim([0,0.011])
 plt.legend(array_sizes**2 * 8)
-plt.title("Get time CDF")
+plt.title("Get time CDF",fontsize=20)
 plt.show()
 
 
-# In[38]:
+# In[49]:
 
 
 # clear keys
@@ -197,7 +187,7 @@ for i in range(N):
 
 # #  \#job vs total time
 
-# In[39]:
+# In[ ]:
 
 
 N = 100
@@ -273,9 +263,9 @@ for size in job_size:
 
 plt.plot(np.array(list(memory_set.keys())),np.array(list(memory_set.values())))
 plt.plot(np.array(list(memory_get.keys())),np.array(list(memory_get.values())))
-plt.xlabel("Number of Jobs")
-plt.ylabel("Average Time")
-plt.title("Number of jobs all at once")
+plt.xlabel("Number of Jobs",fontsize=15)
+plt.ylabel("Average Time",fontsize=15)
+plt.title("Number of jobs all at once",fontsize=20)
 plt.legend(["Set","Get"])
 plt.show()
 
@@ -284,9 +274,9 @@ plt.show()
 
 
 plt.plot(np.array(list(memory_get.keys())),np.array(list(memory_get.values()))-np.array(list(memory_set.values())))
-plt.xlabel("Number Of Jobs")
-plt.ylabel("Average Time")
-plt.title("Get - Set as Number Of Jobs increased")
+plt.xlabel("Number Of Jobs",fontsize=15)
+plt.ylabel("Average Time",fontsize=15)
+plt.title("Get - Set as Number Of Jobs increased",fontsize=20)
 plt.show()
 
 
@@ -306,8 +296,8 @@ for size in job_size:
     cdf = np.cumsum (counts)
     #plt.plot (np.hstack((np.zeros((1,)),bin_edges[1:])), np.hstack((np.zeros(1,),cdf/cdf[-1])))
     plt.plot (bin_edges[1:],cdf/cdf[-1])
-    plt.xlabel("t"); plt.ylabel("f(t)");
-    plt.title("Set number of jobs all at once CDF")
+    plt.xlabel("t (s)",fontsize=15); plt.ylabel("F(t)",fontsize=15);
+    plt.title("Set number of jobs all at once CDF",fontsize=20)
     
     
 
@@ -332,8 +322,8 @@ for size in job_size:
     cdf = np.cumsum (counts)
     #plt.plot (np.hstack((np.zeros((1,)),bin_edges[1:])), np.hstack((np.zeros(1,),cdf/cdf[-1])))
     plt.plot (bin_edges[1:], cdf/cdf[-1])
-    plt.title("Get Number of jobs all at once CDF")
-    plt.xlabel("t"); plt.ylabel("f(t)");
+    plt.title("Get Number of jobs all at once CDF",fontsize=20)
+    plt.xlabel("t (s)",fontsize=15); plt.ylabel("F(t)",fontsize=15);
     
     
 
